@@ -1,6 +1,9 @@
 'use strict';
 
 var easingTypes = require('./easingTypes');
+var rebound = require('rebound');
+
+var springSystem = new rebound.SpringSystem()
 
 // additive is the new iOS 8 default. In most cases it simulates a physics-
 // looking overshoot behavior (especially with easeInOut. You can test that in
@@ -71,6 +74,20 @@ tweenState.Mixin = {
     config.beginValue = config.beginValue == null ? stateRef[stateName] : config.beginValue;
     config.delay = config.delay == null ? DEFAULT_DELAY : config.delay;
 
+    if (config.initialVelocity || (config.tension && config.friction)) {
+      config.duration = undefined;
+      config.spring = springSystem.createSpring(config.tension, config.friction)
+        .setCurrentValue(config.beginValue)
+        .setAtRest()
+        .setVelocity(config.initialVelocity || 0)
+        .setEndValue(config.endValue);
+
+      if (config.onEnd)
+        config.spring.addListener({
+          onSpringAtRest: config.onEnd
+        });
+    }
+
     var newTweenQueue = state.tweenQueue;
     if (config.stackBehavior === tweenState.stackBehavior.DESTRUCTIVE) {
       newTweenQueue = state.tweenQueue.filter(function(item) {
@@ -124,13 +141,19 @@ tweenState.Mixin = {
       // `now - item.initTime` can be negative if initTime is scheduled in the
       // future by a delay. In this case we take 0
 
-      var contrib = -item.config.endValue + item.config.easing(
-        progressTime,
-        item.config.beginValue,
-        item.config.endValue,
-        item.config.duration
-        // TODO: some funcs accept a 5th param
-      );
+      var contrib;
+
+      if (item.config.spring)
+        contrib = -item.config.endValue + item.config.spring.getCurrentValue();
+      else
+        contrib = -item.config.endValue + item.config.easing(
+          progressTime,
+          item.config.beginValue,
+          item.config.endValue,
+          item.config.duration
+          // TODO: some funcs accept a 5th param
+        );
+
       tweeningValue += contrib;
     }
 
@@ -149,13 +172,13 @@ tweenState.Mixin = {
 
     var now = Date.now();
     state.tweenQueue.forEach(function(item) {
-      if (now - item.initTime >= item.config.duration) {
+      if (item.config.duration && now - item.initTime >= item.config.duration) {
         item.config.onEnd && item.config.onEnd();
       }
     });
 
     var newTweenQueue = state.tweenQueue.filter(function(item) {
-      return now - item.initTime < item.config.duration;
+      return item.config.spring ? !item.config.spring.isAtRest() : now - item.initTime < item.config.duration;
     });
 
     this.setState({
