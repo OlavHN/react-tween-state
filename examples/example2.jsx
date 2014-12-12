@@ -13,7 +13,7 @@ var App = React.createClass({
 
   getInitialState: function() {
     return {
-      blocks: [0, 0, 0],
+      blocks: [0, 0, 0, 0],
     };
   },
 
@@ -42,6 +42,14 @@ var App = React.createClass({
       duration: 1000,
       endValue: this.state.blocks[2] === 0 ? 400 : 0,
     });
+    this.tweenState(function(state) {return state.blocks;}, '3', {
+      easing: tweenState.easingTypes.easeInOutQuad,
+      stackBehavior: tweenState.stackBehavior.ADDITIVE,
+      initialVelocity: 0,
+      tension: 50,
+      friction: 3,
+      endValue: this.state.blocks[3] === 0 ? 400 : 0,
+    });
     // BTW, stackBehavior.DESTRUCTIVE + duration 0 effectively cancels all the
     // in-flight animations.
   },
@@ -56,6 +64,11 @@ var App = React.createClass({
     var block3Style = translateXStyle(
       this.getTweeningValue(function(state) {return state.blocks;}, '2')
     );
+    var block4Style = translateXStyle(
+      this.getTweeningValue(function(state) {return state.blocks;}, '3')
+    );
+
+
 
     return (
       <div style={{padding: 10}}>
@@ -76,6 +89,11 @@ var App = React.createClass({
         Optimal default (additive animation, iOS 8 default)
         <div className="boundingBoxStyle">
           <div className="block" style={block3Style} />
+        </div>
+
+        Using rebound-js to drive the animation
+        <div className="boundingBoxStyle">
+          <div className="block" style={block4Style} />
         </div>
       </div>
     );
