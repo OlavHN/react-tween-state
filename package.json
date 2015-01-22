@@ -38,7 +38,7 @@
   },
   "jspm": {
     "dependencies": {
-      "npm:rebound": "0.0.10"
+      "rebound": "npm:rebound@0.0.10"
     }
   }
 }
