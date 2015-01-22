@@ -35,5 +35,10 @@
   },
   "dependencies": {
     "rebound": "0.0.10"
+  },
+  "jspm": {
+    "dependencies": {
+      "npm:rebound": "0.0.10"
+    }
   }
 }
